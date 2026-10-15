@@ -1,4 +1,4 @@
-package com.example.simpletodo.task;
+package com.example.simpletodo.task.exception;
 
 public class TaskInHistoryException extends RuntimeException {
     public TaskInHistoryException() {

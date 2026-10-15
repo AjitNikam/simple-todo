@@ -1,5 +1,7 @@
-package com.example.simpletodo.task;
+package com.example.simpletodo.task.dto.response;
 
+import com.example.simpletodo.task.model.Task;
+import com.example.simpletodo.task.model.TaskStatus;
 import java.time.Instant;
 import java.util.UUID;
 

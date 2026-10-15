@@ -1,5 +1,11 @@
-package com.example.simpletodo.task;
+package com.example.simpletodo.task.controller;
 
+import com.example.simpletodo.task.dto.request.CreateTaskRequest;
+import com.example.simpletodo.task.dto.request.UpdateTaskRequest;
+import com.example.simpletodo.task.dto.request.UpdateTaskStatusRequest;
+import com.example.simpletodo.task.dto.response.TaskDashboardResponse;
+import com.example.simpletodo.task.dto.response.TaskResponse;
+import com.example.simpletodo.task.service.TaskService;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;

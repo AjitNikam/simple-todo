@@ -1,4 +1,4 @@
-package com.example.simpletodo.task;
+package com.example.simpletodo.task.model;
 
 public enum TaskStatus {
     TODO,

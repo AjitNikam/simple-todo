@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ProblemDetail;
-import com.example.simpletodo.task.TaskInHistoryException;
+import com.example.simpletodo.task.exception.TaskInHistoryException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {

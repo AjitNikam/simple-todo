@@ -1,4 +1,6 @@
-package com.example.simpletodo.task;
+package com.example.simpletodo.task.dto.request;
+
+import com.example.simpletodo.task.model.TaskStatus;
 
 import jakarta.validation.constraints.NotNull;
 

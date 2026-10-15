@@ -1,5 +1,14 @@
-package com.example.simpletodo.task;
+package com.example.simpletodo.task.service;
 
+import com.example.simpletodo.task.dto.request.CreateTaskRequest;
+import com.example.simpletodo.task.dto.request.UpdateTaskRequest;
+import com.example.simpletodo.task.dto.request.UpdateTaskStatusRequest;
+import com.example.simpletodo.task.dto.response.TaskDashboardResponse;
+import com.example.simpletodo.task.dto.response.TaskResponse;
+import com.example.simpletodo.task.exception.TaskInHistoryException;
+import com.example.simpletodo.task.model.Task;
+import com.example.simpletodo.task.model.TaskStatus;
+import com.example.simpletodo.task.repository.TaskRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.example.simpletodo.task;
+package com.example.simpletodo.task.dto.response;
 
 import java.util.List;
 
