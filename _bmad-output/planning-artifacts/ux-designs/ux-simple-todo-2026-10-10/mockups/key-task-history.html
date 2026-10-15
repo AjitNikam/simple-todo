@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple ToDo and Daily Diary — Task History</title>
+  <style>
+    :root {
+      --canvas: #F7F8FA;
+      --surface: #FFFFFF;
+      --text: #1F2937;
+      --secondary: #4B5563;
+      --border: #D1D5DB;
+      --action: #1D4ED8;
+      --action-text: #FFFFFF;
+      --focus: #1D4ED8;
+      --radius: 8px;
+      --space: 8px;
+      --font: system-ui, sans-serif;
+    }
+
+    /*
+      DESIGN.md Layout & Spacing and Components govern the visual treatment.
+      EXPERIENCE.md Information Architecture, Component Patterns, State
+      Patterns, and Flow 6 govern the dialog and task-return behavior.
+      This illustrative mock does not override either spine.
+    */
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: var(--canvas);
+      color: var(--text);
+      font: 16px/1.5 var(--font);
+    }
+
+    .page {
+      max-width: 900px;
+      min-height: 460px;
+      margin: 0 auto;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    h1 { margin: 0 0 20px; font-size: 24px; }
+    h2 { margin: 0; font-size: 20px; }
+
+    .heading-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .actions { display: flex; gap: 8px; }
+
+    button {
+      min-height: 40px;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      font: 500 14px/1.4 var(--font);
+    }
+
+    button.primary {
+      border-color: var(--action);
+      background: var(--action);
+      color: var(--action-text);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .group {
+      min-height: 130px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--secondary);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgb(31 41 55 / 38%);
+    }
+
+    .dialog {
+      width: min(100%, 560px);
+      max-height: min(80vh, 620px);
+      overflow: auto;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: 0 16px 40px rgb(31 41 55 / 18%);
+    }
+
+    .dialog-heading { margin-bottom: 16px; }
+    .dialog-heading p { margin: 4px 0 0; color: var(--secondary); }
+
+    .history-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .placeholder { color: var(--secondary); }
+    .status { display: block; color: var(--secondary); font-size: 13px; }
+
+  </style>
+</head>
+<body>
+  <main class="page" aria-label="Tasks dashboard behind the open History dialog" inert>
+    <h1>Simple ToDo and Daily Diary</h1>
+    <div class="heading-row">
+      <h2>Tasks</h2>
+      <div class="actions">
+        <button type="button">History tasks</button>
+        <button class="primary" type="button">Add task</button>
+      </div>
+    </div>
+    <div class="groups" aria-hidden="true">
+      <div class="group">TODO</div>
+      <div class="group">In progress</div>
+      <div class="group">Completed</div>
+    </div>
+  </main>
+
+  <div class="overlay">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="history-title">
+      <div class="heading-row dialog-heading">
+        <div>
+          <h2 id="history-title">History tasks</h2>
+          <p>Tasks outside the seven most recently updated.</p>
+        </div>
+        <button type="button" aria-label="Close History tasks dialog" autofocus>Close</button>
+      </div>
+
+      <div class="history-row">
+        <div>
+          <span class="placeholder">[Task title]</span>
+          <span class="status">TODO</span>
+        </div>
+        <button type="button">Return to dashboard</button>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

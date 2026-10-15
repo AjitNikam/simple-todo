@@ -1,0 +1,33 @@
+:root {
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --canvas: #f7f8fa;
+  --surface: #fff;
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  --border: #d1d5db;
+  --action: #1d4ed8;
+  --error: #b42318;
+  --success: #067647;
+  --focus-ring: #1d4ed8;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}

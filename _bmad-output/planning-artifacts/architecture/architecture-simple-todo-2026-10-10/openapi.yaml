@@ -1,0 +1,775 @@
+openapi: 3.1.0
+info:
+  title: Simple ToDo and Daily Diary API
+  version: 1.0.0
+  description: |
+    REST contract for the single-user task dashboard and daily diary.
+    Diary dates are local calendar dates. Diary writes and history requests
+    identify the browser/device timezone with the required
+    X-Client-Time-Zone header. No authentication is defined for v1.
+servers:
+  - url: /
+    description: Current origin; configure the API base URL per environment.
+tags:
+  - name: Tasks
+    description: Task creation, dashboard, history, and lifecycle operations.
+  - name: Diary
+    description: User-authored diary entries associated with local calendar dates.
+paths:
+  /api/tasks:
+    post:
+      tags: [Tasks]
+      operationId: createTask
+      summary: Create a task
+      description: Creates a task in TODO status. Extra request properties, including status, are rejected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            example:
+              title: Plan sprint goals
+              notes: Include review and QA checklists.
+      responses:
+        '201':
+          description: Task created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                title: Plan sprint goals
+                notes: Include review and QA checklists.
+                status: TODO
+                createdAt: '2026-10-10T09:12:00Z'
+                updatedAt: '2026-10-10T09:12:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags: [Tasks]
+      operationId: listTasks
+      summary: List tasks
+      description: |
+        Returns tasks ordered by updatedAt descending, with id ascending as a
+        deterministic tie-breaker. The response is unpaginated. Set includeHistory=false to return only the
+        seven tasks that belong on the dashboard. The dashboard and history
+        operations provide the corresponding purpose-specific responses.
+      parameters:
+        - name: includeHistory
+          in: query
+          description: Whether to include tasks outside the seven-task dashboard.
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Tasks ordered by recency.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/tasks/dashboard:
+    get:
+      tags: [Tasks]
+      operationId: getTaskDashboard
+      summary: Get dashboard tasks
+      description: Returns at most the seven most recently updated tasks across all statuses.
+      responses:
+        '200':
+          description: Dashboard task set.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDashboard'
+              example:
+                items:
+                  - id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                    title: Plan sprint goals
+                    notes: Include review and QA checklists.
+                    status: TODO
+                    createdAt: '2026-10-10T09:12:00Z'
+                    updatedAt: '2026-10-10T09:12:00Z'
+                total: 1
+                limit: 7
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/tasks/history:
+    get:
+      tags: [Tasks]
+      operationId: getTaskHistory
+      summary: Get tasks outside the dashboard
+      description: |
+        Returns all tasks outside the current seven most recently updated
+        tasks, ordered by updatedAt descending and id ascending as a deterministic
+        tie-breaker. The response is unpaginated. History tasks are view-only
+        except for the restore operation.
+      responses:
+        '200':
+          description: Task history set.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskCollection'
+              example:
+                items:
+                  - id: b6a92c84-2dce-4ca8-9262-2b2ed0d0d7dc
+                    title: Archive old sprint notes
+                    notes: Keep for reference.
+                    status: COMPLETED
+                    createdAt: '2026-10-01T08:00:00Z'
+                    updatedAt: '2026-10-08T17:00:00Z'
+                total: 1
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/tasks/{taskId}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [Tasks]
+      operationId: getTask
+      summary: Get a task
+      responses:
+        '200':
+          description: Task found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags: [Tasks]
+      operationId: updateTask
+      summary: Replace a task
+      description: |
+        Replaces title, notes, and status; updating also refreshes task recency.
+        No entity-version or ETag precondition is used. The latest committed
+        mutation is authoritative; a stale full replacement can replace newer
+        fields.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+            example:
+              title: Plan sprint goals and follow-up
+              notes: Updated notes with release checklist.
+              status: IN_PROGRESS
+      responses:
+        '200':
+          description: Task updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/TaskInHistory'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags: [Tasks]
+      operationId: deleteTask
+      summary: Delete a task
+      description: Tasks in history must first be restored to the dashboard.
+      responses:
+        '204':
+          description: Task deleted; response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/TaskInHistory'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/tasks/{taskId}/status:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    patch:
+      tags: [Tasks]
+      operationId: updateTaskStatus
+      summary: Change task status
+      description: |
+        A status change refreshes task recency and may move the task onto the
+        dashboard. No entity-version or ETag precondition is used; the latest
+        committed mutation is authoritative for the fields it changes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskStatusRequest'
+            example:
+              status: COMPLETED
+      responses:
+        '200':
+          description: Task status updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/TaskInHistory'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/tasks/{taskId}/restore:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    post:
+      tags: [Tasks]
+      operationId: restoreTask
+      summary: Return a history task to the dashboard
+      description: |
+        The target must currently be in History. Refreshes the task's updatedAt
+        value. Dashboard membership is recalculated from the seven most recently
+        updated tasks; the task displaced by this operation becomes a history
+        task when applicable. A task already on the dashboard returns 409.
+      responses:
+        '200':
+          description: Restored task with refreshed recency.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/TaskNotInHistory'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/diary/entries/{date}:
+    parameters:
+      - $ref: '#/components/parameters/DiaryDate'
+    get:
+      tags: [Diary]
+      operationId: getDiaryEntry
+      summary: Get a diary entry for a date
+      description: Returns an explicit null entry when no entry has been saved for the date.
+      responses:
+        '200':
+          description: Entry lookup result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiaryEntryLookup'
+              examples:
+                found:
+                  value:
+                    entry:
+                      id: 5d120e36-2341-4d8a-9d7c-dfd83d92f0db
+                      date: '2026-10-10'
+                      entryType: FULL_ENTRY
+                      content: Today I completed the initial planning and reviewed the backlog.
+                      createdAt: '2026-10-10T13:30:00Z'
+                      updatedAt: '2026-10-10T13:35:00Z'
+                missing:
+                  value:
+                    entry: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags: [Diary]
+      operationId: saveDiaryEntry
+      summary: Create or update the current day's diary entry
+      description: |
+        Upserts the single entry for the path date. The date must equal today's
+        date in X-Client-Time-Zone. A past date is read-only and a future date
+        cannot be created. Content is stored as authored and is never generated
+        or rewritten by the application. No entity-version or ETag precondition
+        is used; the latest committed save replaces this date's entry.
+      parameters:
+        - $ref: '#/components/parameters/ClientTimeZone'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveDiaryEntryRequest'
+            example:
+              entryType: FULL_ENTRY
+              content: Today I completed the initial planning and reviewed the backlog.
+      responses:
+        '200':
+          description: Diary entry created or updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiaryEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/DiaryDateConflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/diary/history:
+    get:
+      tags: [Diary]
+      operationId: getDiaryHistory
+      summary: Get diary entries for the previous four calendar dates
+      description: |
+        Returns exactly four dates, oldest first, excluding today. Every date
+        is included even if no entry exists; a missing entry is represented by
+        entry: null. By default the reference date is today in
+        X-Client-Time-Zone. asOfDate can be supplied for deterministic date
+        queries and testing; it is the reference date, not an included history day.
+      parameters:
+        - $ref: '#/components/parameters/ClientTimeZone'
+        - name: asOfDate
+          in: query
+          description: Optional reference local date; history ends on the preceding date.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: '2026-10-10'
+      responses:
+        '200':
+          description: Four local calendar dates in chronological order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiaryHistory'
+              example:
+                entries:
+                  - date: '2026-10-06'
+                    entry:
+                      id: 22c146ac-b999-41c1-8f67-7fe8c40a7718
+                      date: '2026-10-06'
+                      entryType: SUMMARY
+                      content: A short, self-written account of the day.
+                      createdAt: '2026-10-06T18:00:00Z'
+                      updatedAt: '2026-10-06T18:00:00Z'
+                  - date: '2026-10-07'
+                    entry: null
+                  - date: '2026-10-08'
+                    entry: null
+                  - date: '2026-10-09'
+                    entry: null
+                windowStart: '2026-10-06'
+                windowEnd: '2026-10-09'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    TaskId:
+      name: taskId
+      in: path
+      description: Stable task UUID.
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DiaryDate:
+      name: date
+      in: path
+      description: Diary local calendar date in YYYY-MM-DD format.
+      required: true
+      schema:
+        type: string
+        format: date
+      example: '2026-10-10'
+    ClientTimeZone:
+      name: X-Client-Time-Zone
+      in: header
+      description: |
+        Browser/device IANA timezone identifier, for example
+        America/Los_Angeles. The API uses this zone to determine today's local
+        calendar date for write eligibility and the default diary history window.
+        The API trusts this client-reported value for v1; a missing or invalid
+        identifier returns 400 with INVALID_TIME_ZONE.
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: Asia/Kolkata
+
+  responses:
+    BadRequest:
+      description: Malformed request, invalid date, or validation failure.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidTaskTitle:
+              value:
+                type: urn:simple-todo:problem:validation-error
+                title: Request validation failed
+                status: 400
+                detail: Title is required.
+                instance: /api/tasks
+                code: VALIDATION_ERROR
+                details:
+                  - field: title
+                    issue: must not be blank
+            invalidEntryType:
+              value:
+                type: urn:simple-todo:problem:validation-error
+                title: Request validation failed
+                status: 400
+                detail: entryType must be FULL_ENTRY or SUMMARY.
+                instance: /api/diary/entries/2026-10-10
+                code: VALIDATION_ERROR
+                details:
+                  - field: entryType
+                    issue: invalid enum value
+            invalidTimeZone:
+              value:
+                type: urn:simple-todo:problem:invalid-time-zone
+                title: Invalid timezone
+                status: 400
+                detail: X-Client-Time-Zone must be a valid IANA timezone identifier.
+                instance: /api/diary/history
+                code: INVALID_TIME_ZONE
+                details:
+                  - field: X-Client-Time-Zone
+                    issue: invalid timezone identifier
+    NotFound:
+      description: Task does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: urn:simple-todo:problem:not-found
+            title: Resource not found
+            status: 404
+            detail: Task was not found.
+            instance: /api/tasks/3fa85f64-5717-4562-b3fc-2c963f66afa6
+            code: NOT_FOUND
+            details: []
+    TaskInHistory:
+      description: Task is outside the dashboard and must be restored before mutation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: urn:simple-todo:problem:task-in-history
+            title: Task is in History
+            status: 409
+            detail: Return this task to the dashboard before changing or deleting it.
+            instance: /api/tasks/3fa85f64-5717-4562-b3fc-2c963f66afa6
+            code: TASK_IN_HISTORY
+            details: []
+    TaskNotInHistory:
+      description: Task is already on the dashboard and cannot be restored.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: urn:simple-todo:problem:task-not-in-history
+            title: Task is not in History
+            status: 409
+            detail: Task is already on the dashboard.
+            instance: /api/tasks/3fa85f64-5717-4562-b3fc-2c963f66afa6/restore
+            code: TASK_NOT_IN_HISTORY
+            details: []
+    DiaryDateConflict:
+      description: Diary date is not today in the supplied client timezone.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            pastDate:
+              value:
+                type: urn:simple-todo:problem:diary-date-not-current
+                title: Diary date is not current
+                status: 409
+                detail: Past diary entries are read-only.
+                instance: /api/diary/entries/2026-10-09
+                code: DIARY_DATE_NOT_CURRENT
+                details:
+                  - field: date
+                    issue: must be today's local date
+            futureDate:
+              value:
+                type: urn:simple-todo:problem:diary-date-not-current
+                title: Diary date is not current
+                status: 409
+                detail: Future diary entries cannot be created.
+                instance: /api/diary/entries/2026-10-11
+                code: DIARY_DATE_NOT_CURRENT
+                details:
+                  - field: date
+                    issue: must be today's local date
+    InternalServerError:
+      description: Unexpected server error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: urn:simple-todo:problem:internal-error
+            title: Internal server error
+            status: 500
+            detail: An unexpected error occurred.
+            instance: /api/tasks
+            code: INTERNAL_ERROR
+            details: []
+
+  schemas:
+    TaskStatus:
+      type: string
+      description: Task status; user-visible labels are TODO, In progress, and Completed.
+      enum: [TODO, IN_PROGRESS, COMPLETED]
+    DiaryEntryType:
+      type: string
+      enum: [FULL_ENTRY, SUMMARY]
+    Task:
+      type: object
+      additionalProperties: false
+      required: [id, title, notes, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          pattern: '\S'
+          description: Required, non-blank title. Whitespace-only values are rejected; the server trims the title before storage.
+        notes:
+          type: [string, 'null']
+          description: Optional supporting notes.
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp with UTC offset.
+        updatedAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp with UTC offset.
+    CreateTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          pattern: '\S'
+          description: Required, non-blank title. Whitespace-only values are rejected; the server trims the title before storage.
+        notes:
+          type: [string, 'null']
+          description: Optional supporting notes.
+    UpdateTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [title, notes, status]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          pattern: '\S'
+          description: Required, non-blank title. Whitespace-only values are rejected; the server trims the title before storage.
+        notes:
+          type: [string, 'null']
+          description: Send null to clear notes.
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+    UpdateTaskStatusRequest:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+    TaskDashboard:
+      type: object
+      additionalProperties: false
+      required: [items, total, limit]
+      properties:
+        items:
+          type: array
+          maxItems: 7
+          items:
+            $ref: '#/components/schemas/Task'
+        total:
+          type: integer
+          minimum: 0
+          description: Number of tasks in items; the response is unpaginated.
+        limit:
+          type: integer
+          const: 7
+    TaskCollection:
+      type: object
+      additionalProperties: false
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        total:
+          type: integer
+          minimum: 0
+          description: Number of tasks in items; the response is unpaginated.
+    DiaryEntry:
+      type: object
+      additionalProperties: false
+      required: [id, date, entryType, content, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+          description: Browser/device local calendar date, unique across entries.
+        entryType:
+          $ref: '#/components/schemas/DiaryEntryType'
+        content:
+          type: string
+          minLength: 1
+          pattern: '\S'
+          description: Non-blank, user-authored content stored without rewriting.
+        createdAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp with UTC offset.
+        updatedAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp with UTC offset.
+    SaveDiaryEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [entryType, content]
+      properties:
+        entryType:
+          $ref: '#/components/schemas/DiaryEntryType'
+        content:
+          type: string
+          minLength: 1
+          pattern: '\S'
+          description: Non-blank, user-authored content. Validation does not alter it; the API never generates or rewrites content.
+    DiaryEntryLookup:
+      type: object
+      additionalProperties: false
+      required: [entry]
+      properties:
+        entry:
+          oneOf:
+            - $ref: '#/components/schemas/DiaryEntry'
+            - type: 'null'
+    DiaryHistoryDay:
+      type: object
+      additionalProperties: false
+      required: [date, entry]
+      properties:
+        date:
+          type: string
+          format: date
+        entry:
+          oneOf:
+            - $ref: '#/components/schemas/DiaryEntry'
+            - type: 'null'
+    DiaryHistory:
+      type: object
+      additionalProperties: false
+      required: [entries, windowStart, windowEnd]
+      properties:
+        entries:
+          type: array
+          minItems: 4
+          maxItems: 4
+          description: Exactly four dates, oldest first; missing entries have a null entry field.
+          items:
+            $ref: '#/components/schemas/DiaryHistoryDay'
+        windowStart:
+          type: string
+          format: date
+        windowEnd:
+          type: string
+          format: date
+    ProblemDetailViolation:
+      type: object
+      additionalProperties: false
+      required: [field, issue]
+      properties:
+        field:
+          type: string
+        issue:
+          type: string
+    ProblemDetails:
+      type: object
+      description: RFC 9457 Problem Details with API-specific code and details extensions.
+      additionalProperties: true
+      required: [type, title, status, detail, instance, code, details]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Problem type URI identifying the problem class.
+        title:
+          type: string
+          description: Short, human-readable summary of the problem type.
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+          description: HTTP status code for this occurrence; must match the response status.
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence.
+        instance:
+          type: string
+          format: uri-reference
+          description: URI reference identifying this occurrence, normally the request path.
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+            - NOT_FOUND
+            - TASK_IN_HISTORY
+            - TASK_NOT_IN_HISTORY
+            - DIARY_DATE_NOT_CURRENT
+            - INVALID_TIME_ZONE
+            - INTERNAL_ERROR
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProblemDetailViolation'

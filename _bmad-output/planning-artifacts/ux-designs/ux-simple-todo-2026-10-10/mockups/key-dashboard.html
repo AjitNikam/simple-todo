@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple ToDo and Daily Diary</title>
+  <style>
+    :root {
+      --color-canvas: #F7F8FA;
+      --color-surface: #FFFFFF;
+      --color-text-primary: #1F2937;
+      --color-text-secondary: #4B5563;
+      --color-border: #D1D5DB;
+      --color-action: #1D4ED8;
+      --color-action-text: #FFFFFF;
+      --color-feedback-error: #B42318;
+      --color-feedback-success: #067647;
+      --color-focus-ring: #1D4ED8;
+
+      --font-family: system-ui, sans-serif;
+      --font-heading-size: 24px;
+      --font-heading-weight: 600;
+      --font-heading-line-height: 1.3;
+      --font-body-size: 16px;
+      --font-body-weight: 400;
+      --font-body-line-height: 1.5;
+      --font-label-size: 14px;
+      --font-label-weight: 500;
+      --font-label-line-height: 1.4;
+      --font-meta-size: 13px;
+      --font-meta-weight: 400;
+      --font-meta-line-height: 1.4;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --section-gap: 32px;
+      --page-gutter: 24px;
+
+      --primary-action-background: var(--color-action);
+      --primary-action-foreground: var(--color-action-text);
+      --primary-action-radius: var(--radius-md);
+      --content-surface-background: var(--color-surface);
+      --content-surface-foreground: var(--color-text-primary);
+      --content-surface-border: var(--color-border);
+      --content-surface-radius: var(--radius-md);
+      --text-field-background: var(--color-surface);
+      --text-field-foreground: var(--color-text-primary);
+      --text-field-border: var(--color-border);
+      --text-field-focus-ring: var(--color-focus-ring);
+      --text-field-radius: var(--radius-sm);
+      --inline-feedback-error: var(--color-feedback-error);
+      --inline-feedback-success: var(--color-feedback-success);
+      --task-status-text: var(--color-text-primary);
+      --task-status-surface: var(--color-canvas);
+    }
+
+    /*
+      DESIGN.md Layout & Spacing and Components govern the visual layout and
+      visual component treatment. EXPERIENCE.md Information Architecture,
+      Component Patterns, and State Patterns govern order, behavior, and
+      empty-state meaning. This mock illustrates those sources; it does not
+      change their contract.
+    */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: var(--space-6) var(--space-4);
+      background: var(--color-canvas);
+      color: var(--color-text-primary);
+      font-family: var(--font-family);
+      font-size: var(--font-body-size);
+      font-weight: var(--font-body-weight);
+      line-height: var(--font-body-line-height);
+    }
+
+    .browser-frame {
+      width: min(100%, 960px);
+      margin: 0 auto;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+    }
+
+    .page-header {
+      padding: var(--space-6) var(--page-gutter);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      font-size: var(--font-heading-size);
+      font-weight: var(--font-heading-weight);
+      line-height: var(--font-heading-line-height);
+    }
+
+    main {
+      display: grid;
+      gap: var(--section-gap);
+      padding: var(--space-6) var(--page-gutter);
+    }
+
+    section {
+      min-width: 0;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .primary-action {
+      min-height: 40px;
+      padding: var(--space-2) var(--space-4);
+      border: 1px solid var(--primary-action-background);
+      border-radius: var(--primary-action-radius);
+      background: var(--primary-action-background);
+      color: var(--primary-action-foreground);
+      font: 500 var(--font-label-size)/var(--font-label-line-height) var(--font-family);
+      cursor: pointer;
+    }
+
+    .primary-action:focus-visible {
+      outline: 3px solid var(--color-focus-ring);
+      outline-offset: 3px;
+    }
+
+    .task-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .history-action {
+      min-height: 40px;
+      padding: var(--space-2) var(--space-4);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      font: 500 var(--font-label-size)/var(--font-label-line-height) var(--font-family);
+      cursor: pointer;
+    }
+
+    .history-action:focus-visible {
+      outline: 3px solid var(--color-focus-ring);
+      outline-offset: 3px;
+    }
+
+    .task-groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      gap: var(--space-4);
+    }
+
+    .task-group,
+    .today-panel,
+    .diary-date {
+      border: 1px solid var(--content-surface-border);
+      border-radius: var(--content-surface-radius);
+      background: var(--content-surface-background);
+      color: var(--content-surface-foreground);
+    }
+
+    .task-group {
+      min-height: 144px;
+      padding: var(--space-4);
+    }
+
+    .task-group h3 {
+      display: inline-flex;
+      margin: 0 0 var(--space-5);
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-full);
+      background: var(--task-status-surface);
+      color: var(--task-status-text);
+      font-size: var(--font-label-size);
+      font-weight: var(--font-label-weight);
+      line-height: var(--font-label-line-height);
+    }
+
+    .empty-state {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-body-size);
+      line-height: var(--font-body-line-height);
+    }
+
+    .today-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+      padding: var(--space-4);
+    }
+
+    .today-panel h3,
+    .history-heading {
+      margin: 0;
+      font-size: var(--font-label-size);
+      font-weight: var(--font-label-weight);
+      line-height: var(--font-label-line-height);
+    }
+
+    .today-date,
+    time {
+      display: block;
+      color: var(--color-text-secondary);
+      font-size: var(--font-meta-size);
+      font-weight: var(--font-meta-weight);
+      line-height: var(--font-meta-line-height);
+    }
+
+    .history {
+      margin-top: var(--space-5);
+    }
+
+    .history-heading {
+      margin-bottom: var(--space-3);
+    }
+
+    .diary-dates {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+      gap: var(--space-3);
+    }
+
+    .diary-date {
+      min-height: 100px;
+      padding: var(--space-3);
+    }
+
+    .diary-date p {
+      margin: var(--space-3) 0 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-meta-size);
+      line-height: var(--font-meta-line-height);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="browser-frame">
+    <header class="page-header">
+      <h1>Simple ToDo and Daily Diary</h1>
+    </header>
+
+    <main>
+      <section aria-labelledby="tasks-heading">
+        <div class="section-heading">
+          <h2 id="tasks-heading">Tasks</h2>
+          <div class="task-actions">
+            <button class="history-action" type="button">History tasks</button>
+            <button class="primary-action" type="button">Add task</button>
+          </div>
+        </div>
+
+        <div class="task-groups">
+          <section class="task-group" aria-labelledby="todo-heading">
+            <h3 id="todo-heading">TODO</h3>
+            <p class="empty-state">No tasks yet</p>
+          </section>
+          <section class="task-group" aria-labelledby="in-progress-heading">
+            <h3 id="in-progress-heading">In progress</h3>
+            <p class="empty-state">No tasks yet</p>
+          </section>
+          <section class="task-group" aria-labelledby="completed-heading">
+            <h3 id="completed-heading">Completed</h3>
+            <p class="empty-state">No tasks yet</p>
+          </section>
+        </div>
+      </section>
+
+      <section aria-labelledby="diary-heading">
+        <div class="section-heading">
+          <h2 id="diary-heading">Diary</h2>
+        </div>
+
+        <div class="today-panel">
+          <div>
+            <h3>Today</h3>
+            <time class="today-date" datetime="2026-10-10">10 October 2026</time>
+          </div>
+          <button class="primary-action" type="button">Add today's diary</button>
+        </div>
+
+        <div class="history" aria-labelledby="history-heading">
+          <h3 class="history-heading" id="history-heading">Diary history</h3>
+          <div class="diary-dates">
+            <article class="diary-date">
+              <time datetime="2026-10-06">6 October 2026</time>
+              <p>No entry</p>
+            </article>
+            <article class="diary-date">
+              <time datetime="2026-10-07">7 October 2026</time>
+              <p>No entry</p>
+            </article>
+            <article class="diary-date">
+              <time datetime="2026-10-08">8 October 2026</time>
+              <p>No entry</p>
+            </article>
+            <article class="diary-date">
+              <time datetime="2026-10-09">9 October 2026</time>
+              <p>No entry</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

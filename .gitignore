@@ -1,0 +1,34 @@
+# Python virtual environments and bytecode
+/.venv/
+/venv/
+__pycache__/
+*.py[cod]
+
+# Frontend dependencies and generated build output
+/frontend/node_modules/
+/frontend/dist/
+
+# Backend Gradle caches and generated output
+/backend/.gradle/
+/backend/build/
+/backend/bin/
+*.class
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local editor and operating-system files
+/.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local logs
+*.log
+
+# User-specific BMAD configuration
+/_bmad/config.user.toml

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Simple ToDo and Daily Diary — UX Design Validation</title><style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style></head>
+<body><div class="container">
+<header class="report-header"><div class="title"><h1>Simple ToDo and Daily Diary — UX Design Validation Report</h1><div class="subtitle">C:\study\bmad-workspace\simple-todo\_bmad-output\planning-artifacts\ux-designs\ux-simple-todo-2026-10-10\DESIGN.md · EXPERIENCE.md</div></div></header>
+<div class="synthesis"><p>The spine pair is materially solid: it covers the confirmed task and diary flows, keeps the source requirements explicit, and the visual reference artifacts are appropriately bounded to a single-page dashboard pattern. The main contract weakness was naming and inheritance inconsistency across the design and experience layers, plus repeated assumption language that made the contract feel more tentative than the source decisions.</p><p>The component naming findings were resolved before handoff by aligning component names and adding matching experience patterns. The remaining low-severity recommendations were intentionally retained: assumptions stay near the relevant visual choices so downstream readers can distinguish them from user decisions, and the two peer contracts repeat some behavior where visual and interaction guidance need to remain independently usable.</p></div>
+<div class="dimension-summary"><div class="dim-card"><div class="dim-name">Flow coverage</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+<div class="dim-card"><div class="dim-name">Token completeness</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+<div class="dim-card"><div class="dim-name">Component coverage</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+<div class="dim-card"><div class="dim-name">State coverage</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+<div class="dim-card"><div class="dim-name">Visual reference coverage</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+<div class="dim-card"><div class="dim-name">Bloat &amp; overspecification</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+<div class="dim-card"><div class="dim-name">Inheritance discipline</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+<div class="dim-card"><div class="dim-name">Shape fit</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div></div>
+<section class="dimension"><details><summary><h2>Flow coverage</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>The review checked the PRD journeys for task capture/edit/status changes, diary write/update and date gating, historical review, midnight rollover, deletion, and returning older tasks. Each flow names Aj, has numbered steps and a climax, and includes failure handling where applicable.</p></div></div><div class="findings-list"><p>No findings.</p></div></details></section>
+<section class="dimension"><details><summary><h2>Token completeness</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>Every defined color, typography, rounded, spacing, and component token is present, and the prose references resolve. The neutral palette and visual baseline are marked as assumptions.</p></div></div><div class="findings-list"><p>No findings.</p></div></details></section>
+<section class="dimension"><details><summary><h2>Component coverage</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>Core runtime components were covered, but exact component names were not aligned across the two spines at review time.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Component vocabulary was not fully aligned</h3><span class="finding-location">DESIGN.md Components; EXPERIENCE.md Component Patterns</span></header><div class="finding-note">The design spine&#39;s Task form controls, Today diary editor, and Task history action and dialog did not have exact matching experience rows.</div><div class="finding-fix"><strong>Fix:</strong> Normalize names and provide matching rows in both spines.</div><div class="finding-note"><strong>Resolution:</strong> Resolved before handoff: component labels now match, including Task editor, Today&#39;s diary editor, and Task History dialog.</div></article>
+<article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Page and section headings lacked a behavioral row</h3><span class="finding-location">DESIGN.md Components; EXPERIENCE.md Component Patterns</span></header><div class="finding-note">Page and section headings was named in the design spine without a matching experience rule.</div><div class="finding-fix"><strong>Fix:</strong> Add the matching experience row or remove the component label.</div><div class="finding-note"><strong>Resolution:</strong> Resolved before handoff: EXPERIENCE.md now specifies semantic headings and reading order.</div></article></div></details></section>
+<section class="dimension"><details><summary><h2>State coverage</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>Loading, empty, validation, saved, recoverable failures, historical read-only dates, task history, and local-date rollover are explicitly covered.</p></div></div><div class="findings-list"><p>No findings.</p></div></details></section>
+<section class="dimension"><details><summary><h2>Visual reference coverage</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>Both mockups are linked from relevant sections in both spines; there are no orphaned visual references, and the spines are authoritative on conflict.</p></div></div><div class="findings-list"><p>No findings.</p></div></details></section>
+<section class="dimension"><details><summary><h2>Bloat &amp; overspecification</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>The pair is suitable for its narrow scope, with some repeated assumption and source-rule statements across the peer contracts.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Assumption markers recur</h3><span class="finding-location">DESIGN.md</span></header><div class="finding-note">Assumption tags repeat for palette, typography, layout, shape, and responsive behavior.</div><div class="finding-fix"><strong>Fix:</strong> Consider consolidating assumption notes.</div><div class="finding-note"><strong>Resolution:</strong> Retained intentionally: each marker qualifies the local unconfirmed choice and avoids implying user approval.</div></article>
+<article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Some source truths repeat across the peer contracts</h3><span class="finding-location">DESIGN.md; EXPERIENCE.md</span></header><div class="finding-note">Single-page layout, diary boundaries, and non-deletion appear in both visual and behavioral guidance.</div><div class="finding-fix"><strong>Fix:</strong> Consider trimming duplicate explanatory text.</div><div class="finding-note"><strong>Resolution:</strong> Retained where needed so each peer contract is usable independently; visual and interaction responsibilities remain distinct.</div></article></div></details></section>
+<section class="dimension"><details><summary><h2>Inheritance discipline</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>Sources and token references resolve; the main weakness at review time was inconsistent component and product-entity naming.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Component names differed across the spines</h3><span class="finding-location">DESIGN.md; EXPERIENCE.md</span></header><div class="finding-note">Several concepts used different labels across the two contracts.</div><div class="finding-fix"><strong>Fix:</strong> Choose one canonical naming scheme and reuse it.</div><div class="finding-note"><strong>Resolution:</strong> Resolved before handoff: component labels were aligned.</div></article>
+<article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Named product entities varied in terminology</h3><span class="finding-location">DESIGN.md; EXPERIENCE.md</span></header><div class="finding-note">The source PRD uses ToDo item and Diary entry while the UX pair also uses generic task terminology.</div><div class="finding-fix"><strong>Fix:</strong> Standardize named entities on source terms.</div><div class="finding-note"><strong>Resolution:</strong> Resolved for named components and diary entries; Tasks and History tasks remain the confirmed interface labels.</div></article></div></details></section>
+<section class="dimension"><details><summary><h2>Shape fit</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>DESIGN.md follows the canonical section order, and EXPERIENCE.md includes all required default sections. The responsive detail is clearly treated as an assumption.</p></div></div><div class="findings-list"><p>No findings.</p></div></details></section>
+<div class="mechanical"><h3>Mechanical notes</h3><ul><li>Component names now match across DESIGN.md and EXPERIENCE.md.</li>
+<li>Design-token references resolve; both dashboard and History dialog mocks are linked from the spines.</li>
+<li>The spines explicitly remain authoritative if a mock differs.</li>
+<li>The detailed rubric findings total 1 high, 3 medium, and 2 low.</li></ul></div>
+<footer class="report-footer"><div class="meta"><span>Rubric: review-rubric.md</span><span>Generated: 2026-10-10T14:19:25.006Z</span></div></footer>
+</div></body></html>
