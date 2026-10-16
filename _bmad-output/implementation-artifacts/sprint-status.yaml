@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-13-2026 12:42
-last_updated: 10-15-2026 11:38
+last_updated: 10-16-2026 12:50
 project: simple-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -37,7 +37,7 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   epic-1: in-progress
   1-1-add-and-view-tasks-on-the-dashboard: done
-  1-2-edit-task-details-and-change-progress: review
+  1-2-edit-task-details-and-change-progress: done
   1-3-find-and-restore-older-tasks: backlog
   1-4-delete-dashboard-tasks: backlog
   epic-1-retrospective: optional
