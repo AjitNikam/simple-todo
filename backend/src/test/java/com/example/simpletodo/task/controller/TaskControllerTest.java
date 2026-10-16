@@ -214,6 +214,19 @@ class TaskControllerTest {
     }
 
     @Test
+    void unknownRouteReturnsNotFoundProblem() throws Exception {
+        mockMvc.perform(get("/api/unknown-resource"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.instance").value("/api/unknown-resource"));
+
+        mockMvc.perform(post("/api/unknown-resource"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.instance").value("/api/unknown-resource"));
+    }
+
+    @Test
     void malformedTaskIdReturnsValidationProblem() throws Exception {
         mockMvc.perform(put("/api/tasks/not-a-uuid")
                         .contentType(MediaType.APPLICATION_JSON)

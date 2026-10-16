@@ -3,7 +3,9 @@ package com.example.simpletodo.task.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +27,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,6 +57,9 @@ class TaskServiceTest {
         assertThat(response.notes()).isEqualTo("Review the outline");
         assertThat(saved.getValue().getId()).isNotNull();
         assertThat(saved.getValue().getCreatedAt()).isEqualTo(saved.getValue().getUpdatedAt());
+        InOrder order = inOrder(taskRepository);
+        order.verify(taskRepository, times(2)).findDashboardTasksForUpdate(any(Pageable.class));
+        order.verify(taskRepository).save(any(Task.class));
     }
 
     @Test
@@ -93,7 +99,7 @@ class TaskServiceTest {
         Instant previousUpdatedAt = createdAt.plusSeconds(10);
         Task task = new Task(id, "Old title", "Old notes", TaskStatus.TODO, createdAt, previousUpdatedAt);
         when(taskRepository.findById(id)).thenReturn(Optional.of(task));
-        when(taskRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(task)));
+        when(taskRepository.findDashboardTasksForUpdate(any(Pageable.class))).thenReturn(List.of(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         TaskResponse response = taskService.update(
@@ -115,7 +121,7 @@ class TaskServiceTest {
         Instant previousUpdatedAt = createdAt.plusSeconds(10);
         Task task = new Task(id, "Keep title", "Keep notes", TaskStatus.TODO, createdAt, previousUpdatedAt);
         when(taskRepository.findById(id)).thenReturn(Optional.of(task));
-        when(taskRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(task)));
+        when(taskRepository.findDashboardTasksForUpdate(any(Pageable.class))).thenReturn(List.of(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         TaskResponse response = taskService.updateStatus(id, new UpdateTaskStatusRequest(TaskStatus.COMPLETED));
@@ -127,7 +133,7 @@ class TaskServiceTest {
     }
 
     @Test
-    void historyTaskCannotBeUpdated() {
+    void historyTaskCannotBeReplacedOrHaveItsStatusChanged() {
         UUID historyId = UUID.randomUUID();
         Task historyTask = new Task(
                 historyId,
@@ -146,8 +152,14 @@ class TaskServiceTest {
                         historyTask.getUpdatedAt().plusSeconds(index + 1L)))
                 .toList();
         when(taskRepository.findById(historyId)).thenReturn(Optional.of(historyTask));
-        when(taskRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(dashboardTasks));
+        when(taskRepository.findDashboardTasksForUpdate(any(Pageable.class)))
+                .thenReturn(List.of(historyTask))
+                .thenReturn(dashboardTasks);
 
+        assertThatThrownBy(() -> taskService.update(
+                historyId,
+                new UpdateTaskRequest("Changed title", "Changed notes", TaskStatus.COMPLETED)))
+                .isInstanceOf(TaskInHistoryException.class);
         assertThatThrownBy(() -> taskService.updateStatus(
                 historyId,
                 new UpdateTaskStatusRequest(TaskStatus.COMPLETED)))
@@ -170,6 +182,8 @@ class TaskServiceTest {
         }
         Task selectedTask = tasks.get(6);
         when(taskRepository.findById(selectedTask.getId())).thenReturn(Optional.of(selectedTask));
+        when(taskRepository.findDashboardTasksForUpdate(any(Pageable.class)))
+                .thenReturn(tasks.subList(0, TaskDashboardResponse.DASHBOARD_LIMIT));
         when(taskRepository.findAll(any(Pageable.class))).thenAnswer(invocation -> {
             Pageable pageable = invocation.getArgument(0);
             List<Task> sorted = tasks.stream()

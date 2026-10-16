@@ -18,6 +18,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ProblemDetail;
 import com.example.simpletodo.task.exception.TaskInHistoryException;
@@ -135,6 +136,20 @@ public class ApiExceptionHandler {
                 List.of(),
                 request.getRequestURI(),
                 exception.getHeaders());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNoResourceFound(
+            NoResourceFoundException exception,
+            HttpServletRequest request) {
+        return problem(
+                HttpStatus.NOT_FOUND,
+                "Resource not found",
+                "The requested resource was not found.",
+                "NOT_FOUND",
+                List.of(),
+                request.getRequestURI(),
+                HttpHeaders.EMPTY);
     }
 
     @ExceptionHandler(Exception.class)

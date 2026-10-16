@@ -71,11 +71,32 @@ context:
 - Given an edit or status request fails, when the error is shown, then the task is not presented as updated and my entered values remain available to retry.
 - Given a task is not on the dashboard, when an update is requested, then the API rejects it with `409 TASK_IN_HISTORY` and does not mutate it.
 
+### Review Findings
+
+- [x] [Review][Patch] Keep task membership and recency consistent when mutations overlap [backend/src/main/java/com/example/simpletodo/task/service/TaskService.java:49]
+- [x] [Review][Patch] Return 404 for unknown API resources instead of converting them to 500 [backend/src/main/java/com/example/simpletodo/api/ApiExceptionHandler.java:140]
+- [x] [Review][Patch] Test History rejection for full task replacements [backend/src/test/java/com/example/simpletodo/task/service/TaskServiceTest.java:130]
+- [x] [Review][Patch] Isolate dashboard integration fixtures from pre-existing task rows [backend/src/test/java/com/example/simpletodo/task/service/TaskPersistenceIntegrationTest.java:47]
+
+#### Rejected
+
+- false — `TaskDashboardResponse.total` describes the returned dashboard items; the API contract and Story 1.1 spec explicitly define it that way.
+- false — History restoration is intentionally excluded from Story 1.2 and belongs to the following History story.
+- false — Task deletion is intentionally excluded from Story 1.2 and belongs to a later story.
+- false — The Diary placeholder is explicitly required for the first task slice and Diary behavior is outside Story 1.2.
+- low — Verbose SQL/web logging is unlikely to harm supported use of this local-only, loopback-bound application.
+- low — Maximum title/notes lengths are not specified, and resource-exhaustion risk is unlikely in the local-only single-user application; introducing limits would require a new contract.
+- false — Loopback binding is an explicit project constraint, not a deployment defect.
+- false — Optimistic version checks would violate Story 1.2's explicit prohibition on version/ETag conflict checks and its last-write-wins behavior.
+- false — The task-table migration is required by Story 1.1's initial persistence scope; it is not a Story 1.2 schema change.
+- false — The current README has an “Editing dashboard tasks” section documenting the requested title, notes, status, refresh, and retry behavior.
+
 ## Implementation Notes
 
 - Added dashboard-only `PUT /api/tasks/{taskId}` and `PATCH /api/tasks/{taskId}/status` endpoints. Full replacements validate and trim titles, both paths refresh `updatedAt`, and unknown/history tasks return the contract's `NOT_FOUND`/`TASK_IN_HISTORY` Problem Details.
 - Added inline card editing and status controls. Successful mutations refetch the dashboard; failed detail edits preserve entered fields, and failed status changes remain visible as unsaved selections with a retry action.
 - Added backend request/service/controller coverage, frontend mutation and retry coverage, responsive editor/control styles, and README instructions.
+- Applied the four code-review patches in `spec-1-2-code-review-fixes.md`: dashboard mutations lock and refresh membership, unmatched resources return 404 Problem Details, full replacements have History rejection coverage, and PostgreSQL tests isolate transactional fixture data.
 
 ## Spec Change Log
 

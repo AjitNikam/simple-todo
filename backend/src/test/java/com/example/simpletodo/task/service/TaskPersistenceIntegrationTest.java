@@ -10,6 +10,7 @@ import com.example.simpletodo.task.dto.response.TaskResponse;
 import com.example.simpletodo.task.model.Task;
 import com.example.simpletodo.task.model.TaskStatus;
 import com.example.simpletodo.task.repository.TaskRepository;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +19,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @Tag("postgres-integration")
 @SpringBootTest
+@Transactional
 class TaskPersistenceIntegrationTest {
     @Autowired
     private TaskService taskService;
@@ -28,12 +31,17 @@ class TaskPersistenceIntegrationTest {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private EntityManager entityManager;
+
     @Test
     void createdTaskCanBeReadBackFromPostgres() {
         String title = "Persistence check " + UUID.randomUUID();
         TaskResponse created = taskService.create(new CreateTaskRequest(title, "Persisted task notes"));
 
         try {
+            entityManager.flush();
+            entityManager.clear();
             Task reloaded = taskRepository.findById(created.id()).orElseThrow();
             assertThat(reloaded.getTitle()).isEqualTo(title);
             assertThat(reloaded.getNotes()).isEqualTo("Persisted task notes");
@@ -45,6 +53,7 @@ class TaskPersistenceIntegrationTest {
 
     @Test
     void dashboardReturnsNewestSevenInDeterministicOrder() {
+        taskRepository.deleteAll();
         Instant base = Instant.parse("2026-10-13T10:00:00Z");
         long uuidPrefix = UUID.randomUUID().getMostSignificantBits();
         long[] updateOffsets = {5, 4, 4, 3, 2, 1, 1, 1, 1};
@@ -78,6 +87,7 @@ class TaskPersistenceIntegrationTest {
 
     @Test
     void updatingDashboardTaskPersistsFieldsRecencyAndDashboardCutoff() {
+        taskRepository.deleteAll();
         Instant base = Instant.parse("2026-10-13T10:00:00Z");
         long uuidPrefix = UUID.randomUUID().getMostSignificantBits();
         List<Task> tasks = new ArrayList<>();

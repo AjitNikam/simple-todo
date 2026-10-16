@@ -34,6 +34,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse create(CreateTaskRequest request) {
+        lockDashboardTasks();
         Instant now = Instant.now();
         Task task = new Task(
                 UUID.randomUUID(),
@@ -70,17 +71,23 @@ public class TaskService {
     }
 
     private Task findDashboardTask(UUID taskId) {
+        List<Task> dashboardTasks = lockDashboardTasks();
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found."));
-        boolean onDashboard = taskRepository
-                .findAll(PageRequest.of(0, TaskDashboardResponse.DASHBOARD_LIMIT, RECENCY_ORDER))
-                .getContent()
+        boolean onDashboard = dashboardTasks
                 .stream()
                 .anyMatch(dashboardTask -> dashboardTask.getId().equals(taskId));
         if (!onDashboard) {
             throw new TaskInHistoryException();
         }
         return task;
+    }
+
+    private List<Task> lockDashboardTasks() {
+        PageRequest dashboardPage = PageRequest.of(0, TaskDashboardResponse.DASHBOARD_LIMIT, RECENCY_ORDER);
+        taskRepository.findDashboardTasksForUpdate(dashboardPage);
+        // A fresh statement sees inserts committed while the locking query waited.
+        return taskRepository.findDashboardTasksForUpdate(dashboardPage);
     }
 
     private static Instant nextUpdatedAt(Task task) {
